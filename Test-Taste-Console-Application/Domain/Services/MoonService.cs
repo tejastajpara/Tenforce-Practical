@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Newtonsoft.Json;
 using Test_Taste_Console_Application.Constants;
 using Test_Taste_Console_Application.Domain.DataTransferObjects;
 using Test_Taste_Console_Application.Domain.DataTransferObjects.JsonObjects;
@@ -23,9 +24,13 @@ namespace Test_Taste_Console_Application.Domain.Services
 
         public IEnumerable<Moon> GetAllMoons()
         {
+            Console.WriteLine("Started Loading AllMoons...");
+
             var response = _httpClientService.Client
                 .GetAsync(UriPath.GetAllMoonsWithMassQueryParameters)
                 .Result;
+
+            Console.WriteLine("AllMoons Are Loaded...");
 
             //If the status code isn't 200-299, then the function returns an empty collection.
             if (!response.IsSuccessStatusCode)

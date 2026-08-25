@@ -14,11 +14,14 @@ namespace Test_Taste_Console_Application.Domain.Services
 
         public HttpClientService(HttpClient client)
         {
-            //The HTTP client is configured in the constructor.
             Client = client;
             Client.BaseAddress = new Uri(UriPath.BaseUri);
-            Client.DefaultRequestHeaders.Accept.Add(new
-                MediaTypeWithQualityHeaderValue(HttpClientSettings.JsonType));
+
+            Client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue(HttpClientSettings.JsonType));
+
+            Client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", "258dc5e7-d359-4e11-87d7-73871d0a76e5");
         }
     }
 }
