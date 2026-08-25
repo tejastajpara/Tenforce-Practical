@@ -18,6 +18,7 @@ namespace Test_Taste_Console_Application.Domain.DataTransferObjects
             get => Id;
             set => Id = value;
         }
+        [JsonProperty("temperature")] public float Temperature { get; set; }
 
         //The path of the specific moon
         [JsonProperty("rel")] public string Rel { get; set; }

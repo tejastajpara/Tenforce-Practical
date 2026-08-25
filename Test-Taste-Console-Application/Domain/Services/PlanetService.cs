@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
-using Newtonsoft.Json;
 using Test_Taste_Console_Application.Constants;
 using Test_Taste_Console_Application.Domain.DataTransferObjects;
 using Test_Taste_Console_Application.Domain.DataTransferObjects.JsonObjects;
@@ -26,42 +28,74 @@ namespace Test_Taste_Console_Application.Domain.Services
         {
             var allPlanetsWithTheirMoons = new Collection<Planet>();
 
+            Console.WriteLine("Started Loading GetAllPlanets...");
+
             var response = _httpClientService.Client
                 .GetAsync(UriPath.GetAllPlanetsWithMoonsQueryParameters)
                 .Result;
 
-            //If the status code isn't 200-299, then the function returns an empty collection.
+            Console.WriteLine("GetAllPlanets Are Loaded...");
+
             if (!response.IsSuccessStatusCode)
             {
-                Logger.Instance.Warn($"{LoggerMessage.GetRequestFailed}{response.StatusCode}");
+                Logger.Instance.Warn(
+                    $"{LoggerMessage.GetRequestFailed}{response.StatusCode}");
+
                 return allPlanetsWithTheirMoons;
             }
 
             var content = response.Content.ReadAsStringAsync().Result;
 
-            //The JSON converter uses DTO's, that can be found in the DataTransferObjects folder, to deserialize the response content.
             var results = JsonConvert.DeserializeObject<JsonResult<PlanetDto>>(content);
 
-            //The JSON converter can return a null object. 
-            if (results == null) return allPlanetsWithTheirMoons;
+            if (results == null)
+            {
+                return allPlanetsWithTheirMoons;
+            }
 
-            //If the planet doesn't have any moons, then it isn't added to the collection.
             foreach (var planet in results.Bodies)
             {
-                if(planet.Moons != null)
+                Console.WriteLine($"Processing planet: {planet.Id}");
+
+                if (planet.Moons != null)
                 {
                     var newMoonsCollection = new Collection<MoonDto>();
+
                     foreach (var moon in planet.Moons)
                     {
-                        var moonResponse = _httpClientService.Client
-                            .GetAsync(UriPath.GetMoonByIdQueryParameters + moon.URLId)
-                            .Result;
-                        var moonContent = moonResponse.Content.ReadAsStringAsync().Result;
-                        newMoonsCollection.Add(JsonConvert.DeserializeObject<MoonDto>(moonContent));
-                    }
-                    planet.Moons = newMoonsCollection;
+                        Console.WriteLine($"Requesting moon: {moon.URLId}");
 
+                        var moonResponse = _httpClientService.Client
+                            .GetAsync(
+                                UriPath.GetMoonByIdQueryParameters + moon.URLId)
+                            .Result;
+
+                        Console.WriteLine(
+                            $"Moon response: {moonResponse.StatusCode}");
+
+                        if (!moonResponse.IsSuccessStatusCode)
+                        {
+                            Logger.Instance.Warn(
+                                $"{LoggerMessage.GetRequestFailed}{moonResponse.StatusCode}");
+
+                            continue;
+                        }
+
+                        var moonContent =
+                            moonResponse.Content.ReadAsStringAsync().Result;
+
+                        var moonDto =
+                            JsonConvert.DeserializeObject<MoonDto>(moonContent);
+
+                        if (moonDto != null)
+                        {
+                            newMoonsCollection.Add(moonDto);
+                        }
+                    }
+
+                    planet.Moons = newMoonsCollection;
                 }
+
                 allPlanetsWithTheirMoons.Add(new Planet(planet));
             }
 
